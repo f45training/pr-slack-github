@@ -31,8 +31,11 @@ router.get('/github', function(req, res, next) {
                     }, {
                         github_token: body.access_token,
                         github_id: body.id
-                    }, {}, function (error, response, body) {
-                        if (!error && response.statusCode == 200) {
+                    }, {}, function (err, user) {
+                        if (!err) {
+                            res.send();
+                        } else {
+                            console.log(err);
                             res.send();
                         }
                     });
