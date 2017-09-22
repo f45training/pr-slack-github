@@ -56,7 +56,8 @@ router.post('/pr', function(req, res, next) {
                                         request.post({
                                             url: 'https://api.github.com/repos/' + repo + '/pulls',
                                             headers: {
-                                                Authorization: 'token ' + user.github_token
+                                                'User-Agent': process.env.APP_NAME,
+                                                'Authorization': 'token ' + user.github_token
                                             },
                                             form: {
                                                 title: title,
@@ -72,7 +73,8 @@ router.post('/pr', function(req, res, next) {
                                                     request.put({
                                                         url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
                                                         headers: {
-                                                            Authorization: 'token ' + user.github_token
+                                                            'User-Agent': process.env.APP_NAME,
+                                                            'Authorization': 'token ' + user.github_token
                                                         }
                                                     }, function (error, response, body) {
                                                         if (!error && response.statusCode == 200) {
@@ -112,8 +114,13 @@ router.post('/pr', function(req, res, next) {
                         if (!title) {
                             request.get({
                                 url: 'https://api.github.com/repos/Bywave/footlocker-release-api/compare/' + command[1] + '...' + command[2],
+                                headers: {
+                                    'User-Agent': process.env.APP_NAME,
+                                    'Authorization': 'token ' + user.github_token
+                                },
                             }, function (error, response, body) {
                                 if (!error && response.statusCode == 200) {
+                                    body = JSON.parse(body);
                                     title = body.commits[0].commit.message
 
                                     doPullRequest();
