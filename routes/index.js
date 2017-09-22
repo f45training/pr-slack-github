@@ -12,7 +12,8 @@ router.post('/pr', function(req, res, next) {
 	var name = req.body.user_name;
 	var response = {
 		text: name + ' cannot do that now!',
-		attachments: []
+		attachments: [],
+		color: 'danger'
 	};
 	var host = req.headers.host;
 	var protocol = host.match(/.*localhost.*/) ? 'http' : 'https';
@@ -80,12 +81,14 @@ router.post('/pr', function(req, res, next) {
 												    if (!error && response.statusCode == 200) {
 												    	response.text = name + ' successfully created a PR (auto-merged)';
 														response.attachments = [];
+														response.color = 'good';
 														success = true;
 												    }
 												});
 									    	} else {
 									    		response.text = name + ' successfully created a PR (requires code review)';
 												response.attachments = [];
+												response.color = 'good';
 												success = true;
 									    	}
 									    }
