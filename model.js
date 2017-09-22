@@ -15,8 +15,6 @@ var userSchema = new Schema({
 	github_id: Number,
 	github_token: String,
 	added_at: {type: Date, default: Date.now}
-}, {
-	_id: false
 });
 
 model.User = mongoose.model('User', userSchema);
