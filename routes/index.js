@@ -9,8 +9,7 @@ router.get('/', function(req, res, next) {
 
 /* POST Create PR. */
 router.post('/pr', function(req, res, next) {
-	console.log(req.body);
-	var name = req.body.user_name.charAt(0).toUpperCase() + req.body.user_name.slice(1);
+	var name = req.body.user_name;
 	var response = {
 		text: name + ' cannot do that now!',
 		attachments: []
@@ -23,8 +22,8 @@ router.post('/pr', function(req, res, next) {
 		}, function (err, user) {
 			if (!err) {
 				response.attachments.push({
-					text: '<a href="https://github.com/login/oauth/authorize?scope=repo&client_id=' +
-						process.env.GITHUB_CLIENTID + '&redirect_uri=' + redirectUri + '">You should talk to Github</a>'
+					text: '<https://github.com/login/oauth/authorize?scope=repo&client_id=' +
+						process.env.GITHUB_CLIENTID + '&redirect_uri=' + redirectUri + '"|You should talk to Github>'
 				});
 				var success = false;
 				if (user.length) {

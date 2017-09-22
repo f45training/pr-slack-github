@@ -13,6 +13,7 @@ var Schema = mongoose.Schema;
 var userSchema = new Schema({
 	_id: String,
 	user_id: String,
+	github_id: Number,
 	github_token: String,
 	added_at: {type: Date, default: Date.now}
 });
