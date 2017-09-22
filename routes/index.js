@@ -59,16 +59,16 @@ router.post('/pr', function(req, res, next) {
                                                 'User-Agent': process.env.APP_NAME,
                                                 'Authorization': 'token ' + user.github_token
                                             },
-                                            form: {
+                                            json: {
                                                 title: title,
                                                 head: command[2],
                                                 base: command[1],
-                                                body: command[4] ? command[4] : ''
+                                                body: command[4] || ''
                                             }
                                         }, function (error, response, body) {
-                                            if (!error && response.statusCode == 200) {
-                                                body = JSON.parse(body);
-
+                                            console.log(error);
+                                            console.log(response.statusCode);
+                                            if (!error) {
                                                 if (autoMerge) {
                                                     request.put({
                                                         url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
@@ -77,11 +77,11 @@ router.post('/pr', function(req, res, next) {
                                                             'Authorization': 'token ' + user.github_token
                                                         }
                                                     }, function (error, response, body) {
-                                                        if (!error && response.statusCode == 200) {
+                                                        if (!error) {
                                                             
                                                             thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                                             thisResponse.attachments[0].color = 'good';
-                                                            thisResponse.attachments[0].text = 'Pull request was auto-merged';
+                                                            thisResponse.attachments[0].text = body.message;
                                                             res.send(thisResponse);
                                                         } else {
                                                             console.log(body);
