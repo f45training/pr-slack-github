@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 
 /**
+ * Get other envs
+ */
+require('dotenv').config();
+
+/**
  * Module dependencies.
  */
 
 var app = require('../app');
 var debug = require('debug')('pr-slack-github:server');
 var http = require('http');
+
 
 /**
  * Get port from environment and store in Express.
