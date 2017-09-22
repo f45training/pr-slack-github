@@ -38,6 +38,7 @@ router.get('/github', function(req, res, next) {
                     });
 
                 } else {
+                    console.log(body);
                     res.send();
                 }
             } else {
