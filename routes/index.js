@@ -14,7 +14,10 @@ router.post('/pr', function(req, res, next) {
 		text: name + ' cannot do that now!',
 		attachments: []
 	};
-	var redirectUri = encodeURIComponent(req.baseUrl + '/users/github?user=' + req.body.user_id);
+	var host = req.headers.host;
+	var protocol = host.match(/.*localhost.*/) ? 'http' : 'https';
+
+	var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github?user=' + req.body.user_id);
 
 	if (process.env.SLACK_TOKEN == req.body.token) {
 		Model.User.find({
