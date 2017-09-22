@@ -33,8 +33,20 @@ router.post('/pr', function(req, res, next) {
                     if (user.github_token) {
                         var command = req.body.text.match(/\@[^\s]+ pr ([^\s]+) ([^\s]+) [“"]([^”"]+)[”"](?: [“"]([^”"]+)[”"])?/);
                         var autoMerge = false;
+                        var title = res[3];
+                        
                         if (res[1].match(/.*staging.*/)) {
                             autoMerge = true;
+                        }
+
+                        if (!title) {
+                            request.get({
+                                url: 'https://api.github.com/repos/Bywave/footlocker-release-api/compare/' + res[1] + '...' + res[2],
+                            }, function (error, response, body) {
+                                if (!error && response.statusCode == 200) {
+                                    title = body.commits[0].commit.message
+                                }
+                            });
                         }
 
                         request.post({
@@ -59,7 +71,7 @@ router.post('/pr', function(req, res, next) {
                                             Authorization: 'token ' + user.github_token
                                         },
                                         form: {
-                                            title: res[3],
+                                            title: title,
                                             head: res[2],
                                             base: res[1],
                                             body: res[4] ? res[4] : ''

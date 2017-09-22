@@ -31,7 +31,6 @@ router.get('/github', function(req, res, next) {
                         user_id: req.query.user
                     }, {
                         github_token: body.access_token,
-                        github_id: body.id
                     }, {}, function (err, user) {
                         if (!err) {
                             res.send();

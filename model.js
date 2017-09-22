@@ -12,7 +12,6 @@ var Schema = mongoose.Schema;
  */
 var userSchema = new Schema({
 	user_id: String,
-	github_id: Number,
 	github_token: String,
 	added_at: {type: Date, default: Date.now}
 });
