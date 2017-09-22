@@ -82,7 +82,7 @@ router.post('/pr', function(req, res, next) {
                                                             thisResponse.attachments[0].text = 'Pull request was auto-merged';
                                                             res.send(thisResponse);
                                                         } else {
-                                                            console.log(error);
+                                                            console.log(body);
                                                             res.send(thisResponse);
                                                         }
                                                     });
@@ -93,13 +93,13 @@ router.post('/pr', function(req, res, next) {
                                                     res.send(thisResponse);
                                                 }
                                             } else {
-                                                console.log(error);
+                                                console.log(body);
                                                 res.send(thisResponse);
                                             }
                                         });
                                     }
                                 } else {
-                                    console.log(error);
+                                    console.log(body);
                                     res.send(thisResponse);
                                 }
                             });
@@ -118,7 +118,7 @@ router.post('/pr', function(req, res, next) {
 
                                     doPullRequest();
                                 } else {
-                                    console.log(error);
+                                    console.log(body);
                                     res.send(thisResponse);
                                 }
                             });
