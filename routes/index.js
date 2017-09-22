@@ -66,8 +66,6 @@ router.post('/pr', function(req, res, next) {
                                                 body: command[4] || ''
                                             }
                                         }, function (error, response, body) {
-                                            console.log(error);
-                                            console.log(response.statusCode);
                                             if (!error) {
                                                 if (autoMerge) {
                                                     request.put({
@@ -78,6 +76,7 @@ router.post('/pr', function(req, res, next) {
                                                         }
                                                     }, function (error, response, body) {
                                                         if (!error) {
+                                                            body = JSON.parse(body);
                                                             
                                                             thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                                             thisResponse.attachments[0].color = 'good';
