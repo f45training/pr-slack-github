@@ -36,74 +36,65 @@ router.post('/pr', function(req, res, next) {
                         var command = req.body.text.match(/([^\s]+) ([^\s]+)(?: [“"]([^”"]+)[”"])?(?: [“"]([^”"]+)[”"])?/);
                         var autoMerge = false;
                         var title = command[3];
+                        var repo = '';
+                        var pullRequestCalls = 2;
                         var doPullRequest = function () {
-                            request.post({
-                                url: 'https://slack.com/api/channels.info',
-                                form: {
-                                    token: process.env.SLACK_AUTH,
-                                    channel: req.body.channel_id
-                                }
-                            }, function (error, response, body) {
-                                if (!error && response.statusCode == 200) {
-                                    body = JSON.parse(body);
+                            // Check if we reached required calls to do task
+                            pullRequestCalls--;
+                            if (pullRequestCalls) {
+                                return;
+                            }
 
-                                    var repo = body.channel.topic.value;
-
-                                    if (!repo) {
-                                        thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
-                                        res.send(thisResponse);
-                                    } else {
-                                        request.post({
-                                            url: 'https://api.github.com/repos/' + repo + '/pulls',
-                                            headers: {
-                                                'User-Agent': process.env.APP_NAME,
-                                                'Authorization': 'token ' + user.github_token
-                                            },
-                                            json: {
-                                                title: title,
-                                                head: command[2],
-                                                base: command[1],
-                                                body: command[4] || ''
-                                            }
-                                        }, function (error, response, body) {
-                                            if (!error) {
-                                                if (autoMerge) {
-                                                    request.put({
-                                                        url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
-                                                        headers: {
-                                                            'User-Agent': process.env.APP_NAME,
-                                                            'Authorization': 'token ' + user.github_token
-                                                        }
-                                                    }, function (error, response, body) {
-                                                        if (!error) {
-                                                            body = JSON.parse(body);
-                                                            
-                                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
-                                                            thisResponse.attachments[0].color = 'good';
-                                                            thisResponse.attachments[0].text = body.message;
-                                                            res.send(thisResponse);
-                                                        } else {
-                                                            console.log(body);
-                                                            res.send(thisResponse);
-                                                        }
-                                                    });
-                                                } else {
+                            if (!repo) {
+                                thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
+                                res.send(thisResponse);
+                            } else {
+                                request.post({
+                                    url: 'https://api.github.com/repos/' + repo + '/pulls',
+                                    headers: {
+                                        'User-Agent': process.env.APP_NAME,
+                                        'Authorization': 'token ' + user.github_token
+                                    },
+                                    json: {
+                                        title: title,
+                                        head: command[2],
+                                        base: command[1],
+                                        body: command[4] || ''
+                                    }
+                                }, function (error, response, body) {
+                                    if (!error) {
+                                        if (autoMerge) {
+                                            request.put({
+                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                headers: {
+                                                    'User-Agent': process.env.APP_NAME,
+                                                    'Authorization': 'token ' + user.github_token
+                                                }
+                                            }, function (error, response, body) {
+                                                if (!error) {
+                                                    body = JSON.parse(body);
+                                                    
                                                     thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                                     thisResponse.attachments[0].color = 'good';
-                                                    thisResponse.attachments[0].text = 'Pull request requires code review for merging';
+                                                    thisResponse.attachments[0].text = body.message;
+                                                    res.send(thisResponse);
+                                                } else {
+                                                    console.log(body);
                                                     res.send(thisResponse);
                                                 }
-                                            } else {
-                                                console.log(body);
-                                                res.send(thisResponse);
-                                            }
-                                        });
+                                            });
+                                        } else {
+                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                            thisResponse.attachments[0].color = 'good';
+                                            thisResponse.attachments[0].text = 'Pull request requires code review for merging';
+                                            res.send(thisResponse);
+                                        }
+                                    } else {
+                                        console.log(body);
+                                        res.send(thisResponse);
                                     }
-                                } else {
-                                    console.log(body);
-                                    res.send(thisResponse);
-                                }
-                            });
+                                });
+                            }
                         }
                         
                         if (command[1].match(/.*staging.*/)) {
@@ -131,6 +122,25 @@ router.post('/pr', function(req, res, next) {
                         } else {
                             doPullRequest();
                         }
+
+                        request.post({
+                                url: 'https://slack.com/api/channels.info',
+                                form: {
+                                    token: process.env.SLACK_AUTH,
+                                    channel: req.body.channel_id
+                                }
+                            }, function (error, response, body) {
+                                if (!error && response.statusCode == 200) {
+                                    body = JSON.parse(body);
+
+                                    repo = body.channel.topic.value;
+
+                                    doPullRequest();
+                                } else {
+                                    console.log(body);
+                                    res.send(thisResponse);
+                                }
+                            });
 
                     }
                 } else {
