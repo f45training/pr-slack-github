@@ -4,120 +4,118 @@ var Model = require('../model');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  	res.render('index', { title: 'Express' });
+    res.render('index', { title: 'Express' });
 });
 
 /* POST Create PR. */
 router.post('/pr', function(req, res, next) {
-	var name = req.body.user_name;
-	var response = {
-		text: name + ' cannot do that now!',
-		attachments: [],
-		color: 'danger'
-	};
-	var host = req.headers.host;
-	var protocol = host.match(/.*localhost.*/) ? 'http' : 'https';
+    var name = req.body.user_name;
+    var response = {
+        text: 'Jeez! ' + name + ' cannot do that now.',
+        attachments: [{
+            color: 'danger'
+        }],
+    };
+    var host = req.headers.host;
+    var protocol = host.match(/.*localhost.*/) ? 'http' : 'https';
 
-	var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github?user=' + req.body.user_id);
+    var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github?user=' + req.body.user_id);
 
-	if (process.env.SLACK_TOKEN == req.body.token) {
-		Model.User.find({
-			user_id: req.body.user_id
-		}, function (err, user) {
-			if (!err) {
-				response.attachments.push({
-					text: '<https://github.com/login/oauth/authorize?scope=repo&client_id=' +
-						process.env.GITHUB_CLIENTID + '&redirect_uri=' + redirectUri + '"|You should talk to Github>'
-				});
-				var success = false;
-				if (user.length) {
-					if (user.github_token) {
-						var command = req.body.text.match(/\@[^\s]+ pr ([^\s]+) ([^\s]+) [“"]([^”"]+)[”"](?: [“"]([^”"]+)[”"])?/);
-						var autoMerge = false;
-						if (res[1].match(/.*staging.*/)) {
-						    autoMerge = true;
-						}
+    if (process.env.SLACK_TOKEN == req.body.token) {
+        Model.User.find({
+            user_id: req.body.user_id
+        }, function (err, user) {
+            if (!err) {
+                response.attachments[0].text = 'Please <https://github.com/login/oauth/authorize?scope=repo&client_id=' +
+                        process.env.GITHUB_CLIENTID + '&redirect_uri=' + redirectUri + '|go ask Github> for permission';
 
-						request.post({
-							url: 'https://slack.com/api/channels.info',
-							form: {
-								token: process.env.SLACK_AUTH,
-								channel: req.body.channel_id
-							}
-						}, function (error, response, body) {
-						    if (!error && response.statusCode == 200) {
-						    	body = JSON.parse(body);
+                if (user.length) {
+                    if (user.github_token) {
+                        var command = req.body.text.match(/\@[^\s]+ pr ([^\s]+) ([^\s]+) [“"]([^”"]+)[”"](?: [“"]([^”"]+)[”"])?/);
+                        var autoMerge = false;
+                        if (res[1].match(/.*staging.*/)) {
+                            autoMerge = true;
+                        }
 
-						    	var repo = body.channel.topic.value;
+                        request.post({
+                            url: 'https://slack.com/api/channels.info',
+                            form: {
+                                token: process.env.SLACK_AUTH,
+                                channel: req.body.channel_id
+                            }
+                        }, function (error, response, body) {
+                            if (!error && response.statusCode == 200) {
+                                body = JSON.parse(body);
 
-						    	if (!repo) {
-						    		response.attachments = [{
-										text: 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.'
-									}];
-									res.send(response);
-						    	} else {
-						    		request.post({
-										url: 'https://api.github.com/repos/' + repo + '/pulls',
-										headers: {
-								        	Authorization: 'token ' + user.github_token
-								        },
-								        form: {
-								        	title: res[3],
-								        	head: res[2],
-								        	base: res[1],
-								        	body: res[4] ? res[4] : ''
-								        }
-									}, function (error, response, body) {
-									    if (!error && response.statusCode == 200) {
-									    	body = JSON.parse(body);
+                                var repo = body.channel.topic.value;
 
-									    	if (autoMerge) {
-									    		request.put({
-													url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
-													headers: {
-											        	Authorization: 'token ' + user.github_token
-											        }
-												}, function (error, response, body) {
-												    if (!error && response.statusCode == 200) {
-												    	response.text = name + ' successfully created a PR (auto-merged)';
-														response.attachments = [];
-														response.color = 'good';
-														success = true;
-												    }
-												});
-									    	} else {
-									    		response.text = name + ' successfully created a PR (requires code review)';
-												response.attachments = [];
-												response.color = 'good';
-												success = true;
-									    	}
-									    }
-									});
-						    	}
-						    }
-						});
-					}
-				}
+                                if (!repo) {
+                                    response.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
+                                    res.send(response);
+                                } else {
+                                    request.post({
+                                        url: 'https://api.github.com/repos/' + repo + '/pulls',
+                                        headers: {
+                                            Authorization: 'token ' + user.github_token
+                                        },
+                                        form: {
+                                            title: res[3],
+                                            head: res[2],
+                                            base: res[1],
+                                            body: res[4] ? res[4] : ''
+                                        }
+                                    }, function (error, response, body) {
+                                        if (!error && response.statusCode == 200) {
+                                            body = JSON.parse(body);
 
-				if (!success) {
-					var user = new Model.User({
-						user_id: req.body.user_id
-					});
-					user.save();
-				}
+                                            if (autoMerge) {
+                                                request.put({
+                                                    url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                    headers: {
+                                                        Authorization: 'token ' + user.github_token
+                                                    }
+                                                }, function (error, response, body) {
+                                                    if (!error && response.statusCode == 200) {
+                                                        
+                                                        response.text = 'Banzai! ' + name + ' successfully created a PR';
+                                                        response.attachments[0].color = 'good';
+                                                        response.attachments[0].text = 'Pull request was auto-merged';
+                                                    }
+                                                });
+                                            } else {
+                                                response.text = 'Banzai! ' + name + ' successfully created a PR';
+                                                response.attachments[0].color = 'good';
+                                                response.attachments[0].text = 'Pull request requires code review for merging';
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    var user = new Model.User({
+                        user_id: req.body.user_id
+                    });
+                    user.save(function (err) {
+                        if (err) {
+                            console.log(err);
+                        }
+                    })
+                }
 
-				res.send(response);
-			} else {
-				response.attachments.push({
-					text: 'The gods cannot find you human.'
-				});
-				res.send(response);
-			}
-		}).limit(1);
-	} else {
-		// Just quit by default for non-slack
-		res.send(response);
-	}
+                res.send(response);
+            } else {
+                response.attachments.push({
+                    text: 'The gods cannot find you human.'
+                });
+                res.send(response);
+            }
+        }).limit(1);
+    } else {
+        // Just quit by default for non-slack
+        res.send(response);
+    }
 
 })
 

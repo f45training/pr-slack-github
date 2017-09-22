@@ -11,11 +11,12 @@ var Schema = mongoose.Schema;
  * Models
  */
 var userSchema = new Schema({
-	_id: String,
 	user_id: String,
 	github_id: Number,
 	github_token: String,
 	added_at: {type: Date, default: Date.now}
+}, {
+	_id: false
 });
 
 model.User = mongoose.model('User', userSchema);
