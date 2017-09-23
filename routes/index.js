@@ -37,6 +37,7 @@ router.post('/pr', function(req, res, next) {
                         var autoMerge = false;
                         var title = command[3];
                         var repo = '';
+                        var sha = '';
                         var doPullRequest = function () {
 
                             request.post({
@@ -59,6 +60,9 @@ router.post('/pr', function(req, res, next) {
                                         if (body.number) {
                                             request.put({
                                                 url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                json: {
+                                                    sha: sha
+                                                },
                                                 headers: {
                                                     'User-Agent': process.env.APP_NAME,
                                                     'Authorization': 'token ' + user.github_token
@@ -124,7 +128,8 @@ router.post('/pr', function(req, res, next) {
                                         }, function (error, response, body) {
                                             body = JSON.parse(body);
                                             if (!error && response.statusCode == 200) {
-                                                title = body.commits[0].commit.message
+                                                title = body.commits[0].commit.message;
+                                                sha = body.commits[0].sha;
 
                                                 doPullRequest();
                                             } else {
