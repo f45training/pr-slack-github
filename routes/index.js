@@ -64,25 +64,31 @@ router.post('/pr', function(req, res, next) {
                                 }, function (error, response, body) {
                                     if (!error) {
                                         if (autoMerge) {
-                                            request.put({
-                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
-                                                headers: {
-                                                    'User-Agent': process.env.APP_NAME,
-                                                    'Authorization': 'token ' + user.github_token
-                                                }
-                                            }, function (error, response, body) {
-                                                if (!error) {
-                                                    body = JSON.parse(body);
-                                                    
-                                                    thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
-                                                    thisResponse.attachments[0].color = 'good';
-                                                    thisResponse.attachments[0].text = body.message;
-                                                    res.send(thisResponse);
-                                                } else {
-                                                    console.log(body);
-                                                    res.send(thisResponse);
-                                                }
-                                            });
+                                            if (body.number) {
+                                                request.put({
+                                                    url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                    headers: {
+                                                        'User-Agent': process.env.APP_NAME,
+                                                        'Authorization': 'token ' + user.github_token
+                                                    }
+                                                }, function (error, response, body) {
+                                                    if (!error) {
+                                                        body = JSON.parse(body);
+                                                        
+                                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                                        thisResponse.attachments[0].color = 'good';
+                                                        thisResponse.attachments[0].text = body.message;
+                                                        res.send(thisResponse);
+                                                    } else {
+                                                        console.log(body);
+                                                        res.send(thisResponse);
+                                                    }
+                                                });
+                                            } else {
+                                                thisResponse.text = 'Bomb! The gods cannot create your PR';
+                                                thisResponse.attachments[0].text = body.errors[0].message;
+                                                res.send(thisResponse);
+                                            }
                                         } else {
                                             thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                             thisResponse.attachments[0].color = 'good';
