@@ -57,9 +57,11 @@ router.post('/pr', function(req, res, next) {
 
                                 if (!error) {
                                     if (autoMerge) {
-                                        if (body.number) {
+                                        var pullNumber = body.number;
+                                        if (pullNumber) {
+                                            console.log(sha);
                                             request.put({
-                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + pullNumber + '/merge',
                                                 json: {
                                                     sha: sha
                                                 },
@@ -70,7 +72,8 @@ router.post('/pr', function(req, res, next) {
                                             }, function (error, response, body) {
                                                 if (!error) {
                                                     if (response.statusCode == 405) {
-                                                        body.message += ' Checkout ' + command[1] + ' then merge ' + command[2] + ' or use Github to resolve conflict';
+                                                        body.message += '. Checkout ' + command[1] + ' then merge ' + command[2] +
+                                                            ' or <https://github.com/' + repo + '/pull/' + pullNumber + '/conflicts|use Github> to resolve conflict';
                                                     }
 
                                                     thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
