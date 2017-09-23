@@ -5,7 +5,6 @@ var Model = require('../model');
 
 /* GET users github auth callback. */
 router.get('/github', function(req, res, next) {
-    res = res.set('Connection', 'close');
 
     if (req.query.code) {
         request.post({
@@ -33,23 +32,23 @@ router.get('/github', function(req, res, next) {
                         github_token: body.access_token,
                     }, {}, function (err, user) {
                         if (!err) {
-                            res.send();
+                            res.render('github');
                         } else {
                             console.log(err);
-                            res.send();
+                            res.render('github');
                         }
                     });
 
                 } else {
                     console.log(body);
-                    res.send();
+                    res.render('github');
                 }
             } else {
-                res.send();
+                res.render('github');
             }
         })
     } else {
-        res.send();
+        res.render('github');
     }
 });
 
