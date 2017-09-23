@@ -37,13 +37,7 @@ router.post('/pr', function(req, res, next) {
                         var autoMerge = false;
                         var title = command[3];
                         var repo = '';
-                        var pullRequestCalls = 2;
                         var doPullRequest = function () {
-                            // Check if we reached required calls to do task
-                            pullRequestCalls--;
-                            if (pullRequestCalls) {
-                                return;
-                            }
 
                             if (!repo) {
                                 thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
@@ -109,47 +103,52 @@ router.post('/pr', function(req, res, next) {
                             autoMerge = true;
                         }
 
-                        if (!title) {
-                            request.get({
-                                url: 'https://api.github.com/repos/Bywave/footlocker-release-api/compare/' + command[1] + '...' + command[2],
-                                headers: {
-                                    'User-Agent': process.env.APP_NAME,
-                                    'Authorization': 'token ' + user.github_token
-                                },
-                            }, function (error, response, body) {
-                                if (!error && response.statusCode == 200) {
-                                    body = JSON.parse(body);
-                                    title = body.commits[0].commit.message
-
-                                    doPullRequest();
-                                } else {
-                                    console.log(body);
-                                    res.send(thisResponse);
-                                }
-                            });
-                        } else {
-                            doPullRequest();
-                        }
-
                         request.post({
-                                url: 'https://slack.com/api/channels.info',
-                                form: {
-                                    token: process.env.SLACK_AUTH,
-                                    channel: req.body.channel_id
-                                }
-                            }, function (error, response, body) {
-                                if (!error && response.statusCode == 200) {
-                                    body = JSON.parse(body);
+                            url: 'https://slack.com/api/channels.info',
+                            form: {
+                                token: process.env.SLACK_AUTH,
+                                channel: req.body.channel_id
+                            }
+                        }, function (error, response, body) {
+                            if (!error && response.statusCode == 200) {
+                                body = JSON.parse(body);
 
-                                    repo = body.channel.topic.value;
+                                repo = body.channel.topic.value;
 
-                                    doPullRequest();
+                                if (!title) {
+                                    request.get({
+                                        url: 'https://api.github.com/repos/' + repo + '/compare/' + command[1] + '...' + command[2],
+                                        headers: {
+                                            'User-Agent': process.env.APP_NAME,
+                                            'Authorization': 'token ' + user.github_token
+                                        },
+                                    }, function (error, response, body) {
+                                        body = JSON.parse(body);
+                                        if (!error && response.statusCode == 200) {
+                                            title = body.commits[0].commit.message
+
+                                            doPullRequest();
+                                        } else {
+                                            console.log(body);
+                                            var message = body.message;
+                                            if (message === 'Not Found') {
+                                                message = 'This hooman\'s commit is nowhere to be found.';
+                                            }
+                                            thisResponse.attachments[0].text = message;
+                                            res.send(thisResponse);
+                                        }
+                                    });
                                 } else {
-                                    console.log(body);
-                                    res.send(thisResponse);
+                                    doPullRequest();
                                 }
-                            });
+                            } else {
+                                console.log(body);
+                                res.send(thisResponse);
+                            }
+                        });
 
+                    } else {
+                        res.send(thisResponse);
                     }
                 } else {
                     var user = new Model.User({
