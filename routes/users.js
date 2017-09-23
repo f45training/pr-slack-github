@@ -5,7 +5,7 @@ var Model = require('../model');
 
 /* GET users github auth callback. */
 router.get('/github', function(req, res, next) {
-    res.set('Connection', 'close');
+    res = res.set('Connection', 'close');
 
     if (req.query.code) {
         request.post({
@@ -22,7 +22,7 @@ router.get('/github', function(req, res, next) {
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 body = JSON.parse(body);
-                
+
                 var accessToken = body.access_token;
                 if (!body.error && accessToken) {
 
