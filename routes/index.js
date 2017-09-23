@@ -62,6 +62,8 @@ router.post('/pr', function(req, res, next) {
                                         body: command[4] || ''
                                     }
                                 }, function (error, response, body) {
+                                    thisResponse.text = 'Bomb! The gods cannot create your PR';
+
                                     if (!error) {
                                         if (autoMerge) {
                                             if (body.number) {
@@ -85,7 +87,6 @@ router.post('/pr', function(req, res, next) {
                                                     }
                                                 });
                                             } else {
-                                                thisResponse.text = 'Bomb! The gods cannot create your PR';
                                                 thisResponse.attachments[0].text = body.errors[0].message;
                                                 res.send(thisResponse);
                                             }
@@ -97,6 +98,7 @@ router.post('/pr', function(req, res, next) {
                                         }
                                     } else {
                                         console.log(body);
+                                        thisResponse.attachments[0].text = body.message;
                                         res.send(thisResponse);
                                     }
                                 });
@@ -161,7 +163,7 @@ router.post('/pr', function(req, res, next) {
                 }
                 
             } else {
-                thisResponse.attachments[0].text = 'The gods cannot find you human.';
+                thisResponse.attachments[0].text = 'The gods cannot find you hooman.';
                 res.send(thisResponse);
             }
         }).limit(1);
