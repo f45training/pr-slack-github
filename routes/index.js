@@ -69,6 +69,10 @@ router.post('/pr', function(req, res, next) {
                                                 }
                                             }, function (error, response, body) {
                                                 if (!error) {
+                                                    if (response.statusCode == 405) {
+                                                        body.message += ' Checkout ' + base + ' then merge ' + head + ' or use Github to resolve conflict';
+                                                    }
+
                                                     thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                                     thisResponse.attachments[0].color = 'good';
                                                     thisResponse.attachments[0].text = body.message;
