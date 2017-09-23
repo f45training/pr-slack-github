@@ -39,64 +39,59 @@ router.post('/pr', function(req, res, next) {
                         var repo = '';
                         var doPullRequest = function () {
 
-                            if (!repo) {
-                                thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
-                                res.send(thisResponse);
-                            } else {
-                                request.post({
-                                    url: 'https://api.github.com/repos/' + repo + '/pulls',
-                                    headers: {
-                                        'User-Agent': process.env.APP_NAME,
-                                        'Authorization': 'token ' + user.github_token
-                                    },
-                                    json: {
-                                        title: title,
-                                        head: command[2],
-                                        base: command[1],
-                                        body: command[4] || ''
-                                    }
-                                }, function (error, response, body) {
-                                    thisResponse.text = 'Bomb! The gods cannot create your PR';
+                            request.post({
+                                url: 'https://api.github.com/repos/' + repo + '/pulls',
+                                headers: {
+                                    'User-Agent': process.env.APP_NAME,
+                                    'Authorization': 'token ' + user.github_token
+                                },
+                                json: {
+                                    title: title,
+                                    head: command[2],
+                                    base: command[1],
+                                    body: command[4] || ''
+                                }
+                            }, function (error, response, body) {
+                                thisResponse.text = 'Bomb! The gods cannot create your PR';
 
-                                    if (!error) {
-                                        if (autoMerge) {
-                                            if (body.number) {
-                                                request.put({
-                                                    url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
-                                                    headers: {
-                                                        'User-Agent': process.env.APP_NAME,
-                                                        'Authorization': 'token ' + user.github_token
-                                                    }
-                                                }, function (error, response, body) {
-                                                    if (!error) {
-                                                        body = JSON.parse(body);
-                                                        
-                                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
-                                                        thisResponse.attachments[0].color = 'good';
-                                                        thisResponse.attachments[0].text = body.message;
-                                                        res.send(thisResponse);
-                                                    } else {
-                                                        console.log(body);
-                                                        res.send(thisResponse);
-                                                    }
-                                                });
-                                            } else {
-                                                thisResponse.attachments[0].text = body.errors[0].message;
-                                                res.send(thisResponse);
-                                            }
+                                if (!error) {
+                                    if (autoMerge) {
+                                        if (body.number) {
+                                            request.put({
+                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + body.number + '/merge',
+                                                headers: {
+                                                    'User-Agent': process.env.APP_NAME,
+                                                    'Authorization': 'token ' + user.github_token
+                                                }
+                                            }, function (error, response, body) {
+                                                if (!error) {
+                                                    body = JSON.parse(body);
+                                                    
+                                                    thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                                    thisResponse.attachments[0].color = 'good';
+                                                    thisResponse.attachments[0].text = body.message;
+                                                    res.send(thisResponse);
+                                                } else {
+                                                    console.log(body);
+                                                    res.send(thisResponse);
+                                                }
+                                            });
                                         } else {
-                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
-                                            thisResponse.attachments[0].color = 'good';
-                                            thisResponse.attachments[0].text = 'Pull request requires code review for merging';
+                                            thisResponse.attachments[0].text = body.errors[0].message;
                                             res.send(thisResponse);
                                         }
                                     } else {
-                                        console.log(body);
-                                        thisResponse.attachments[0].text = body.message;
+                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                        thisResponse.attachments[0].color = 'good';
+                                        thisResponse.attachments[0].text = 'Pull request requires code review for merging';
                                         res.send(thisResponse);
                                     }
-                                });
-                            }
+                                } else {
+                                    console.log(body);
+                                    thisResponse.attachments[0].text = body.message;
+                                    res.send(thisResponse);
+                                }
+                            });
                         }
                         
                         if (command[1].match(/.*staging.*/)) {
@@ -115,31 +110,36 @@ router.post('/pr', function(req, res, next) {
 
                                 repo = body.channel.topic.value;
 
-                                if (!title) {
-                                    request.get({
-                                        url: 'https://api.github.com/repos/' + repo + '/compare/' + command[1] + '...' + command[2],
-                                        headers: {
-                                            'User-Agent': process.env.APP_NAME,
-                                            'Authorization': 'token ' + user.github_token
-                                        },
-                                    }, function (error, response, body) {
-                                        body = JSON.parse(body);
-                                        if (!error && response.statusCode == 200) {
-                                            title = body.commits[0].commit.message
-
-                                            doPullRequest();
-                                        } else {
-                                            console.log(body);
-                                            var message = body.message;
-                                            if (message === 'Not Found') {
-                                                message = 'This hooman\'s commit is nowhere to be found.';
-                                            }
-                                            thisResponse.attachments[0].text = message;
-                                            res.send(thisResponse);
-                                        }
-                                    });
+                                if (!repo) {
+                                    thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
+                                    res.send(thisResponse);
                                 } else {
-                                    doPullRequest();
+                                    if (!title) {
+                                        request.get({
+                                            url: 'https://api.github.com/repos/' + repo + '/compare/' + command[1] + '...' + command[2],
+                                            headers: {
+                                                'User-Agent': process.env.APP_NAME,
+                                                'Authorization': 'token ' + user.github_token
+                                            },
+                                        }, function (error, response, body) {
+                                            body = JSON.parse(body);
+                                            if (!error && response.statusCode == 200) {
+                                                title = body.commits[0].commit.message
+
+                                                doPullRequest();
+                                            } else {
+                                                console.log(body);
+                                                var message = body.message;
+                                                if (message === 'Not Found') {
+                                                    message = 'This hooman\'s commit is nowhere to be found.';
+                                                }
+                                                thisResponse.attachments[0].text = message;
+                                                res.send(thisResponse);
+                                            }
+                                        });
+                                    } else {
+                                        doPullRequest();
+                                    }
                                 }
                             } else {
                                 console.log(body);
