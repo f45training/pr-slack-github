@@ -69,8 +69,6 @@ router.post('/pr', function(req, res, next) {
                                                 }
                                             }, function (error, response, body) {
                                                 if (!error) {
-                                                    body = JSON.parse(body);
-                                                    
                                                     thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                                     thisResponse.attachments[0].color = 'good';
                                                     thisResponse.attachments[0].text = body.message;
@@ -128,10 +126,15 @@ router.post('/pr', function(req, res, next) {
                                         }, function (error, response, body) {
                                             body = JSON.parse(body);
                                             if (!error && response.statusCode == 200) {
-                                                title = body.commits[0].commit.message;
-                                                sha = body.commits[0].sha;
+                                                if (body.commits.length) {
+                                                    title = body.commits[0].commit.message;
+                                                    sha = body.commits[0].sha;
 
-                                                doPullRequest();
+                                                    doPullRequest();
+                                                } else {
+                                                    thisResponse.attachments[0].text = 'Don\'t overwork man! its already on ' + command[1];
+                                                    res.send(thisResponse);
+                                                }
                                             } else {
                                                 console.log(body);
                                                 var message = body.message;
