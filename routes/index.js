@@ -58,33 +58,64 @@ router.post('/pr', function(req, res, next) {
                                 if (!error) {
                                     if (autoMerge) {
                                         var pullNumber = body.number;
-                                        if (pullNumber) {
-                                            console.log(sha);
-                                            request.put({
-                                                url: 'https://api.github.com/repos/' + repo + '/pulls/' + pullNumber + '/merge',
-                                                json: {
-                                                    sha: sha
-                                                },
-                                                headers: {
-                                                    'User-Agent': process.env.APP_NAME,
-                                                    'Authorization': 'token ' + user.github_token
-                                                }
-                                            }, function (error, response, body) {
-                                                if (!error) {
-                                                    if (response.statusCode == 405) {
-                                                        body.message += '. Checkout ' + command[1] + ' then merge ' + command[2] +
-                                                            ' or <https://github.com/' + repo + '/pull/' + pullNumber + '/conflicts|use Github> to resolve conflict';
+                                        var searchPr = false;
+                                        if (pullNumber || (searchPr = body.errors[0].message.match(/.*already exists.*/))) {
+
+                                            var mergePr = function () {
+                                                request.put({
+                                                    url: 'https://api.github.com/repos/' + repo + '/pulls/' + pullNumber + '/merge',
+                                                    json: {
+                                                        sha: sha
+                                                    },
+                                                    headers: {
+                                                        'User-Agent': process.env.APP_NAME,
+                                                        'Authorization': 'token ' + user.github_token
+                                                    }
+                                                }, function (error, response, body) {
+                                                    if (!error) {
+                                                        if (response.statusCode == 405) {
+                                                            body.message += '. Checkout ' + command[1] + ' then merge ' + command[2] +
+                                                                ' or <https://github.com/' + repo + '/pull/' + pullNumber + '/conflicts|use Github> to resolve conflict';
+                                                        }
+
+                                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                                        thisResponse.attachments[0].color = 'good';
+                                                        thisResponse.attachments[0].text = body.message;
+                                                        res.send(thisResponse);
+                                                    } else {
+                                                        console.log(body);
+                                                        res.send(thisResponse);
+                                                    }
+                                                });
+                                            }
+
+                                            if (searchPr) {
+                                                request.get({
+                                                    url: 'https://api.github.com/repos/' + repo + '/pulls',
+                                                    json: {
+                                                        head: command[2],
+                                                        base: command[1]
+                                                    },
+                                                    headers: {
+                                                        'User-Agent': process.env.APP_NAME,
+                                                        'Authorization': 'token ' + user.github_token
+                                                    }
+                                                }, function (error, response, body) {
+                                                    console.log(body);
+                                                    if (!error && response.statusCode == 200 && body.length) {
+                                                        pullNumber = body[0].number;
+                                                        mergePr();
+                                                    } else {
+                                                        thisResponse.attachments[0].text = 'For some reason, the gods cannot merge your request. Mankind lies in your hands';
+                                                        res.send(thisResponse);
                                                     }
 
-                                                    thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
-                                                    thisResponse.attachments[0].color = 'good';
-                                                    thisResponse.attachments[0].text = body.message;
-                                                    res.send(thisResponse);
-                                                } else {
-                                                    console.log(body);
-                                                    res.send(thisResponse);
-                                                }
-                                            });
+                                                });
+                                            } else {
+                                                mergePr();
+                                            }
+                                            
+
                                         } else {
                                             thisResponse.attachments[0].text = body.errors[0].message;
                                             res.send(thisResponse);
