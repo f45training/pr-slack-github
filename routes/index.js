@@ -136,9 +136,9 @@ router.post('/pr', function(req, res, next) {
 
                                             }
 
-                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR' + appendText;
+                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
                                             thisResponse.attachments[0].color = 'good';
-                                            thisResponse.attachments[0].text = 'Pull request requires code review for merging';
+                                            thisResponse.attachments[0].text = 'Pull request requires code review for merging' + appendText;
                                             res.send(thisResponse);
                                         } else {
                                             thisResponse.attachments[0].text = body.errors[0].message;
