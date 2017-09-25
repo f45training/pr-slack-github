@@ -153,8 +153,7 @@ router.post('/pr', function(req, res, next) {
                             });
                         }
                         
-                        console.log(command[1].match(new RegExp('.*(' + process.env.STAGING_BRANCHES + ').*')));
-                        if (command[1].match(new RegExp('/.*(' + process.env.STAGING_BRANCHES + ').*/'))) {
+                        if (command[1].match(new RegExp('.*(' + process.env.STAGING_BRANCHES + ').*'))) {
                             autoMerge = true;
                         }
 
