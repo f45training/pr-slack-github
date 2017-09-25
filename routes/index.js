@@ -201,8 +201,9 @@ router.post('/pr', function(req, res, next) {
                                                 body = JSON.parse(body);
                                                 if (!error && response.statusCode == 200) {
                                                     if (body.commits.length) {
-                                                        title = body.commits[0].commit.message;
-                                                        sha = body.commits[0].sha;
+                                                        var lastIdx = body.commits.length - 1;
+                                                        title = body.commits[lastIdx].commit.message;
+                                                        sha = body.commits[lastIdx].sha;
 
                                                         doPullRequest();
                                                     } else {
