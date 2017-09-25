@@ -33,9 +33,10 @@ router.post('/pr', function(req, res, next) {
                 if (user.length) {
                     user = user[0];
                     if (user.github_token) {
-                        var command = req.body.text.match(/([^\s]+) ([^\s]+)(?: [“"]([^”"]+)[”"])?(?: [“"]([^”"]+)[”"])?/);
+                        var command = req.body.text.match(/([^\s]+) ([^\s]+)(?: (\@[^\s]+))?(?: [“"]([^”"]+)[”"])?(?: [“"]([^”"]+)[”"])?/);
                         var autoMerge = false;
-                        var title = command[3];
+                        var title = command[4];
+                        var mention = command[3];
                         var repo = '';
                         var sha = '';
                         var doPullRequest = function () {
@@ -50,7 +51,7 @@ router.post('/pr', function(req, res, next) {
                                     title: title,
                                     head: command[2],
                                     base: command[1],
-                                    body: command[4] || ''
+                                    body: command[5] || ''
                                 }
                             }, function (error, response, body) {
                                 thisResponse.text = 'Bomb! The gods cannot create your PR';
@@ -121,7 +122,18 @@ router.post('/pr', function(req, res, next) {
                                             res.send(thisResponse);
                                         }
                                     } else {
-                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR';
+                                        var appendText = '';
+
+                                        if (!head.match(new RegExp('/.*(' + process.env.MASTER_BRANCHES + ').*/'))) {
+                                            appendText += ': ';
+                                            if (mention) {
+                                                appendText += mention + ' ';
+                                            }
+
+                                            appendText += '<' + body.url + '|#' + body.number + ' ' + body.title + '>';
+                                        }
+
+                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR' + appendText;
                                         thisResponse.attachments[0].color = 'good';
                                         thisResponse.attachments[0].text = 'Pull request requires code review for merging';
                                         res.send(thisResponse);
@@ -134,7 +146,7 @@ router.post('/pr', function(req, res, next) {
                             });
                         }
                         
-                        if (command[1].match(/.*staging.*/)) {
+                        if (command[1].match(new RegExp('/.*(' + process.env.STAGING_BRANCHES + ').*/'))) {
                             autoMerge = true;
                         }
 
