@@ -6,7 +6,7 @@ var Model = require('../model');
 /* GET users github auth callback. */
 router.get('/github/:user', function(req, res, next) {
 
-    if (req.params.code) {
+    if (req.query.code) {
         request.post({
             url: 'https://github.com/login/oauth/access_token',
             headers: {
@@ -16,7 +16,7 @@ router.get('/github/:user', function(req, res, next) {
             form: {
                 client_id: process.env.GITHUB_CLIENTID,
                 client_secret: process.env.GITHUB_SECRET,
-                code: req.params.code
+                code: req.query.code
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
