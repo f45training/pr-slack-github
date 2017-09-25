@@ -20,7 +20,7 @@ router.post('/pr', function(req, res, next) {
     var host = req.headers.host;
     var protocol = host.match(/.*localhost.*/) ? 'http' : 'https';
 
-    var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github?user=' + req.body.user_id);
+    var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github/' + req.body.user_id);
 
     if (process.env.SLACK_TOKEN == req.body.token) {
         console.log(req.body);

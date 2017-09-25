@@ -4,9 +4,9 @@ var request = require('request');
 var Model = require('../model');
 
 /* GET users github auth callback. */
-router.get('/github', function(req, res, next) {
+router.get('/github/:user', function(req, res, next) {
 
-    if (req.query.code) {
+    if (req.params.code) {
         request.post({
             url: 'https://github.com/login/oauth/access_token',
             headers: {
@@ -16,7 +16,7 @@ router.get('/github', function(req, res, next) {
             form: {
                 client_id: process.env.GITHUB_CLIENTID,
                 client_secret: process.env.GITHUB_SECRET,
-                code: req.query.code
+                code: req.params.code
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -27,7 +27,7 @@ router.get('/github', function(req, res, next) {
 
                     // Save to our database
                     Model.User.findOneAndUpdate({
-                        user_id: req.query.user
+                        user_id: req.params.user
                     }, {
                         github_token: body.access_token,
                     }, {}, function (err, user) {
