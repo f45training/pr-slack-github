@@ -122,21 +122,28 @@ router.post('/pr', function(req, res, next) {
                                             res.send(thisResponse);
                                         }
                                     } else {
-                                        var appendText = '';
+                                        if (!body.errors) {
+                                            var appendText = '';
 
-                                        if (!head.match(new RegExp('/.*(' + process.env.MASTER_BRANCHES + ').*/'))) {
-                                            appendText += ': ';
-                                            if (mention) {
-                                                appendText += mention + ' ';
+                                            if (!command[2].match(new RegExp('.*(' + process.env.MASTER_BRANCHES + ').*'))) {
+                                                appendText += ': ';
+                                                if (mention) {
+                                                    appendText += mention + ' ';
+                                                }
+
+                                                appendText += '<' + body.url + '|#' + body.number + ' ' + body.title + '>';
+                                                thisResponse.response_type = 'in_channel';
+
                                             }
 
-                                            appendText += '<' + body.url + '|#' + body.number + ' ' + body.title + '>';
+                                            thisResponse.text = 'Banzai! ' + name + ' successfully created a PR' + appendText;
+                                            thisResponse.attachments[0].color = 'good';
+                                            thisResponse.attachments[0].text = 'Pull request requires code review for merging';
+                                            res.send(thisResponse);
+                                        } else {
+                                            thisResponse.attachments[0].text = body.errors[0].message;
+                                            res.send(thisResponse);
                                         }
-
-                                        thisResponse.text = 'Banzai! ' + name + ' successfully created a PR' + appendText;
-                                        thisResponse.attachments[0].color = 'good';
-                                        thisResponse.attachments[0].text = 'Pull request requires code review for merging';
-                                        res.send(thisResponse);
                                     }
                                 } else {
                                     console.log(body);
@@ -146,6 +153,7 @@ router.post('/pr', function(req, res, next) {
                             });
                         }
                         
+                        console.log(command[1].match(new RegExp('.*(' + process.env.STAGING_BRANCHES + ').*')));
                         if (command[1].match(new RegExp('/.*(' + process.env.STAGING_BRANCHES + ').*/'))) {
                             autoMerge = true;
                         }
