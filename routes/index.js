@@ -56,7 +56,9 @@ router.post('/pr', function(req, res, next) {
                             var mention = command[3];
                             var repo = '';
                             var sha = '';
+                            var pullRetries = 2;
                             var doPullRequest = function () {
+                                pullRetries--;
 
                                 request.post({
                                     url: 'https://api.github.com/repos/' + repo + '/pulls',
@@ -92,6 +94,11 @@ router.post('/pr', function(req, res, next) {
                                                     }, function (error, response, body) {
                                                         if (!error) {
                                                             if (response.statusCode == 405) {
+                                                                if (pullRetries) {
+                                                                    doPullRequest();
+                                                                    return;
+                                                                }
+                                                                
                                                                 body.message += '. Checkout ' + command[1] + ' then merge ' + command[2] +
                                                                     ' or <https://github.com/' + repo + '/pull/' + pullNumber + '/conflicts|use Github> to resolve conflict';
                                                             }
