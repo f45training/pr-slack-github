@@ -131,7 +131,7 @@ router.post('/pr', function(req, res, next) {
                                                     appendText += mention + ' ';
                                                 }
 
-                                                appendText += '<' + body.url + '|#' + body.number + ' ' + body.title + '>';
+                                                appendText += '<' + body.html_url + '|#' + body.number + ' ' + body.title + '>';
                                                 thisResponse.response_type = 'in_channel';
 
                                             }
