@@ -23,6 +23,7 @@ router.post('/pr', function(req, res, next) {
     var redirectUri = encodeURIComponent(protocol + '://' +  host + '/users/github?user=' + req.body.user_id);
 
     if (process.env.SLACK_TOKEN == req.body.token) {
+        console.log(req.body);
 
         if (req.body.text.match(/logout/i)) { 
             Model.User.remove({
