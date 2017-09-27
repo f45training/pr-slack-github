@@ -191,45 +191,50 @@ router.post('/pr', function(req, res, next) {
                                 if (!error && response.statusCode == 200) {
                                     body = JSON.parse(body);
 
-                                    repo = body.channel.topic.value;
+                                    if (body.channel && body.channel.topic) {
+                                        repo = body.channel.topic.value;
 
-                                    if (!repo) {
-                                        thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
-                                        res.send(thisResponse);
-                                    } else {
-                                        if (!title) {
-                                            request.get({
-                                                url: 'https://api.github.com/repos/' + repo + '/compare/' + command[1] + '...' + command[2],
-                                                headers: {
-                                                    'User-Agent': process.env.APP_NAME,
-                                                    'Authorization': 'token ' + user.github_token
-                                                },
-                                            }, function (error, response, body) {
-                                                body = JSON.parse(body);
-                                                if (!error && response.statusCode == 200) {
-                                                    if (body.commits.length) {
-                                                        var lastIdx = body.commits.length - 1;
-                                                        title = body.commits[lastIdx].commit.message;
-                                                        sha = body.commits[lastIdx].sha;
+                                        if (!repo) {
+                                            thisResponse.attachments[0].text = 'The gods need knowledge of the channel\'s topic, set it to the {owner}/{repo}.';
+                                            res.send(thisResponse);
+                                        } else {
+                                            if (!title) {
+                                                request.get({
+                                                    url: 'https://api.github.com/repos/' + repo + '/compare/' + command[1] + '...' + command[2],
+                                                    headers: {
+                                                        'User-Agent': process.env.APP_NAME,
+                                                        'Authorization': 'token ' + user.github_token
+                                                    },
+                                                }, function (error, response, body) {
+                                                    body = JSON.parse(body);
+                                                    if (!error && response.statusCode == 200) {
+                                                        if (body.commits.length) {
+                                                            var lastIdx = body.commits.length - 1;
+                                                            title = body.commits[lastIdx].commit.message;
+                                                            sha = body.commits[lastIdx].sha;
 
-                                                        doPullRequest();
+                                                            doPullRequest();
+                                                        } else {
+                                                            thisResponse.attachments[0].text = 'Don\'t overwork man! its already on ' + command[1];
+                                                            res.send(thisResponse);
+                                                        }
                                                     } else {
-                                                        thisResponse.attachments[0].text = 'Don\'t overwork man! its already on ' + command[1];
+                                                        console.log(body);
+                                                        var message = body.message;
+                                                        if (message === 'Not Found') {
+                                                            message = 'This hooman\'s commit is nowhere to be found.';
+                                                        }
+                                                        thisResponse.attachments[0].text = message;
                                                         res.send(thisResponse);
                                                     }
-                                                } else {
-                                                    console.log(body);
-                                                    var message = body.message;
-                                                    if (message === 'Not Found') {
-                                                        message = 'This hooman\'s commit is nowhere to be found.';
-                                                    }
-                                                    thisResponse.attachments[0].text = message;
-                                                    res.send(thisResponse);
-                                                }
-                                            });
-                                        } else {
-                                            doPullRequest();
+                                                });
+                                            } else {
+                                                doPullRequest();
+                                            }
                                         }
+                                    } else {
+                                        console.log(body);
+                                        res.send(thisResponse);
                                     }
                                 } else {
                                     console.log(body);
